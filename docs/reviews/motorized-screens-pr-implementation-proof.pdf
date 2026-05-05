@@ -1,0 +1,32 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 3660 >>
+stream
+BT /F1 8 Tf 1 0 0 1 36 800 Tm (# Motorized Screens PR Implementation Proof) Tj 1 0 0 1 36 789 Tm (## 1\) Exact TypeScript type definitions from `packages/domain/src/motorizedScreens.ts`) Tj 1 0 0 1 36 778 Tm (```ts) Tj 1 0 0 1 36 767 Tm (export const MODULE_KEY = 'motorized_screens_ordering_tool';) Tj 1 0 0 1 36 756 Tm (export type ScreenManufacturer = 'DOS Screens' | 'MagnaTrack';) Tj 1 0 0 1 36 745 Tm (export type MotorType = 'Alpha';) Tj 1 0 0 1 36 734 Tm (export type RawMeasurements = {) Tj 1 0 0 1 36 723 Tm (  UL: number;) Tj 1 0 0 1 36 712 Tm (  LL: number;) Tj 1 0 0 1 36 701 Tm (  OL: number;) Tj 1 0 0 1 36 690 Tm (  UR: number;) Tj 1 0 0 1 36 679 Tm (  LR: number;) Tj 1 0 0 1 36 668 Tm (  OR: number;) Tj 1 0 0 1 36 657 Tm (  T: number;) Tj 1 0 0 1 36 646 Tm (  M: number;) Tj 1 0 0 1 36 635 Tm (  B: number;) Tj 1 0 0 1 36 624 Tm (};) Tj 1 0 0 1 36 613 Tm (export type ScreenConfigSection = {) Tj 1 0 0 1 36 602 Tm (  screenLabel: string;) Tj 1 0 0 1 36 591 Tm (  frameColor?: string;) Tj 1 0 0 1 36 580 Tm (  frameType?: string;) Tj 1 0 0 1 36 569 Tm (};) Tj 1 0 0 1 36 558 Tm (export type MotorConfigSection = {) Tj 1 0 0 1 36 547 Tm (  motorType?: MotorType;) Tj 1 0 0 1 36 536 Tm (  controlType?: string;) Tj 1 0 0 1 36 525 Tm (  powerNotes?: string;) Tj 1 0 0 1 36 514 Tm (};) Tj 1 0 0 1 36 503 Tm (export type OrderMeasurementsSection = {) Tj 1 0 0 1 36 492 Tm (  orderedWidthIn: number;) Tj 1 0 0 1 36 481 Tm (  orderedHeightIn: number;) Tj 1 0 0 1 36 470 Tm (};) Tj 1 0 0 1 36 459 Tm (export type MaterialsSection = {) Tj 1 0 0 1 36 448 Tm (  meshType?: string;) Tj 1 0 0 1 36 437 Tm (  splineColor?: string;) Tj 1 0 0 1 36 426 Tm (};) Tj 1 0 0 1 36 415 Tm (export type MiscSection = {) Tj 1 0 0 1 36 404 Tm (  notes?: string;) Tj 1 0 0 1 36 393 Tm (};) Tj 1 0 0 1 36 382 Tm (export type AttachmentsSection = {) Tj 1 0 0 1 36 371 Tm (  attachmentIds: string[];) Tj 1 0 0 1 36 360 Tm (};) Tj 1 0 0 1 36 349 Tm (export type MotorizedScreenItemInput = {) Tj 1 0 0 1 36 338 Tm (  screenNumber: number;) Tj 1 0 0 1 36 327 Tm (  manufacturer: ScreenManufacturer;) Tj 1 0 0 1 36 316 Tm (  section1: ScreenConfigSection;) Tj 1 0 0 1 36 305 Tm (  section2: MotorConfigSection;) Tj 1 0 0 1 36 294 Tm (  section3: OrderMeasurementsSection;) Tj 1 0 0 1 36 283 Tm (  section4: MaterialsSection;) Tj 1 0 0 1 36 272 Tm (  section5: MiscSection;) Tj 1 0 0 1 36 261 Tm (  section6Raw: RawMeasurements;) Tj 1 0 0 1 36 250 Tm (  section7: AttachmentsSection;) Tj 1 0 0 1 36 239 Tm (};) Tj 1 0 0 1 36 228 Tm (export type DerivedMeasurementSummary = {) Tj 1 0 0 1 36 217 Tm (  upperSlope: number;) Tj 1 0 0 1 36 206 Tm (  slopeDirection: 'left_high' | 'right_high' | 'flat';) Tj 1 0 0 1 36 195 Tm (  highSide: number;) Tj 1 0 0 1 36 184 Tm (  lowSide: number;) Tj 1 0 0 1 36 173 Tm (  tbDiff: number;) Tj 1 0 0 1 36 162 Tm (};) Tj 1 0 0 1 36 151 Tm (export function validateRawMeasurements\(raw: RawMeasurements\): string[] {) Tj 1 0 0 1 36 140 Tm (  const errors: string[] = [];) Tj 1 0 0 1 36 129 Tm (  \(Object.entries\(raw\) as Array<[keyof RawMeasurements, number]>\).forEach\(\([key, value]\) => {) Tj 1 0 0 1 36 118 Tm (    if \(typeof value !== 'number' || Number.isNaN\(value\) || value <= 0\) errors.push\(`${key} mus) Tj 1 0 0 1 36 107 Tm (t be a positive number`\);) Tj 1 0 0 1 36 96 Tm (  }\);) Tj 1 0 0 1 36 85 Tm (  return errors;) Tj 1 0 0 1 36 74 Tm (}) Tj 1 0 0 1 36 63 Tm (export function validateScreenItem\(item: MotorizedScreenItemInput\): string[] {) Tj 1 0 0 1 36 52 Tm (  const errors: string[] = [];) Tj 1 0 0 1 36 41 Tm (  if \(item.screenNumber < 1 || !Number.isInteger\(item.screenNumber\)\) errors.push\('screenNumber ) Tj ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 842] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+5 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000003789 00000 n 
+0000003915 00000 n 
+0000003972 00000 n 
+trailer
+<< /Size 6 /Root 5 0 R >>
+startxref
+4021
+%%EOF
