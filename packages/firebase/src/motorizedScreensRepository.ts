@@ -22,6 +22,19 @@ export type MotorizedScreensSubmission = {
 
 export type ExportLifecycleStatus = 'queued' | 'sent_to_make' | 'archived' | 'failed';
 
+export type SharePointArchiveConfirmation = {
+  sharePointFileId?: string;
+  sharePointFileName?: string;
+  sharePointFolderPath?: string;
+  sharePointWebUrl?: string;
+  sharePointUrl?: string;
+  archiveConfirmedAt?: string;
+  archiveConfirmationSource?: string;
+  makeExecutionId?: string;
+  makeRunId?: string;
+  makeResponseStatus?: string;
+};
+
 export async function appendOnlySaveSubmission(db: any, uid: string, submission: MotorizedScreensSubmission) {
   const submissionPath = `users/${uid}/projects/${submission.projectId}/submissions/${submission.submissionId}`;
   await db.doc(submissionPath).set(submission);
@@ -51,6 +64,7 @@ export async function persistExportTrace(
     exportedAt?: string;
     errorSummary?: string;
     attemptCount?: number;
+    archive?: SharePointArchiveConfirmation;
     statusAt: string;
   },
 ) {

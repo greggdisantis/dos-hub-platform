@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { requireAuthenticatedUser } from '../../guards/firebaseAuthGuard';
 import { MODULE_KEY, MotorizedScreenItemInput, buildPdfStructuredSections, deriveMeasurementSummary, normalizeManufacturerAndMotor, validateScreenItem } from '../../../../../packages/domain/src/motorizedScreens';
-import { appendOnlySaveSubmission, persistExportTrace } from '../../../../../packages/firebase/src/motorizedScreensRepository';
+import { appendOnlySaveSubmission, persistExportTrace, SharePointArchiveConfirmation } from '../../../../../packages/firebase/src/motorizedScreensRepository';
 import { postToMakeWebhook } from '../../../../../packages/integrations/src/makeSharepoint';
 import { buildMotorizedScreensPdf, buildMotorizedScreensPdfFileName } from './pdf';
 
@@ -31,6 +31,29 @@ async function postToMakeWithRetry(webhookUrl: string, payload: any) {
   throw { error: lastError, attemptCount: MAKE_MAX_ATTEMPTS };
 }
 
+function buildArchiveConfirmation(makeResult: any, at: string): SharePointArchiveConfirmation {
+  return {
+    sharePointFileId: makeResult?.sharePointFileId,
+    sharePointFileName: makeResult?.sharePointFileName,
+    sharePointFolderPath: makeResult?.sharePointFolderPath,
+    sharePointWebUrl: makeResult?.sharePointWebUrl,
+    sharePointUrl: makeResult?.sharePointUrl,
+    archiveConfirmedAt: at,
+    archiveConfirmationSource: makeResult?.archiveConfirmationSource || 'make_response_evidence',
+    makeExecutionId: makeResult?.executionId,
+    makeRunId: makeResult?.makeRunId,
+    makeResponseStatus: makeResult?.status,
+  };
+}
+
+function hasArchiveEvidence(makeResult: any): boolean {
+  return Boolean(
+    makeResult?.sharePointUrl
+      || makeResult?.sharePointFileId
+      || makeResult?.archived === true
+      || makeResult?.sharePointWebUrl,
+  );
+}
 
 export async function saveMotorizedScreensOrder(params: {
   db: any;
@@ -129,7 +152,7 @@ export async function exportMotorizedScreensOrder(params: {
       statusAt: statusAtSent,
     });
 
-    if (makeResult?.sharePointUrl || makeResult?.sharePointFileId || makeResult?.archived === true) {
+    if (hasArchiveEvidence(makeResult)) {
       const statusAtArchived = new Date().toISOString();
       await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
         status: 'archived',
@@ -137,6 +160,7 @@ export async function exportMotorizedScreensOrder(params: {
         sharePointUrl: makeResult?.sharePointUrl,
         exportedAt: statusAtArchived,
         attemptCount: successAttempt,
+        archive: buildArchiveConfirmation(makeResult, statusAtArchived),
         statusAt: statusAtArchived,
       });
     }
