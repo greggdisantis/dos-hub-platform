@@ -28,6 +28,7 @@ export async function saveMotorizedScreensOrder(params: {
 
   const submission = {
     moduleKey: MODULE_KEY,
+    schemaVersion: 1,
     submissionId,
     projectId: params.projectId,
     projectName: params.projectName,

@@ -2,6 +2,7 @@ import { MODULE_KEY } from '../../domain/src/motorizedScreens';
 
 export type MotorizedScreensSubmission = {
   moduleKey: typeof MODULE_KEY;
+  schemaVersion: number;
   submissionId: string;
   projectId: string;
   projectName: string;
