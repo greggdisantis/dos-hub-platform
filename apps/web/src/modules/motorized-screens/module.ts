@@ -3,6 +3,7 @@ import { requireAuthenticatedUser } from '../../guards/firebaseAuthGuard';
 import { MODULE_KEY, MotorizedScreenItemInput, buildPdfStructuredSections, deriveMeasurementSummary, normalizeManufacturerAndMotor, validateScreenItem } from '../../../../../packages/domain/src/motorizedScreens';
 import { appendOnlySaveSubmission, persistExportTrace } from '../../../../../packages/firebase/src/motorizedScreensRepository';
 import { postToMakeWebhook } from '../../../../../packages/integrations/src/makeSharepoint';
+import { buildMotorizedScreensPdf, buildMotorizedScreensPdfFileName } from './pdf';
 
 export async function saveMotorizedScreensOrder(params: {
   db: any;
@@ -66,16 +67,18 @@ export async function exportMotorizedScreensOrder(params: {
   webhookUrl: string;
   userUid: string;
   submission: Awaited<ReturnType<typeof saveMotorizedScreensOrder>>;
-  pdfBase64: string;
+  pdfBase64?: string;
 }) {
-  const fileName = `${params.submission.projectName}__${MODULE_KEY}__${params.submission.submissionId}.pdf`;
+  const fileName = buildMotorizedScreensPdfFileName(params.submission.projectName, params.submission.submissionId);
+  const generatedPdfBase64 = params.pdfBase64 ?? Buffer.from(buildMotorizedScreensPdf(params.submission)).toString('base64');
+
   const payload = {
     moduleKey: MODULE_KEY,
     projectId: params.submission.projectId,
     submissionId: params.submission.submissionId,
     projectName: params.submission.projectName,
     uid: params.userUid,
-    pdfBase64: params.pdfBase64,
+    pdfBase64: generatedPdfBase64,
     fileName,
     createdAt: new Date().toISOString(),
   };
