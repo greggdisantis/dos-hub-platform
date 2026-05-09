@@ -20,6 +20,8 @@ export type MotorizedScreensSubmission = {
   derivedAudit: unknown[];
 };
 
+export type ExportLifecycleStatus = 'queued' | 'sent_to_make' | 'archived' | 'failed';
+
 export async function appendOnlySaveSubmission(db: any, uid: string, submission: MotorizedScreensSubmission) {
   const submissionPath = `users/${uid}/projects/${submission.projectId}/submissions/${submission.submissionId}`;
   await db.doc(submissionPath).set(submission);
@@ -38,10 +40,23 @@ export async function appendOnlySaveSubmission(db: any, uid: string, submission:
   });
 }
 
-export async function persistExportTrace(db: any, uid: string, submissionId: string, trace: { makeExecutionId?: string; sharePointUrl?: string; exportedAt: string }) {
-  const exportTracePath = `users/${uid}/activity/${submissionId}__export__${trace.exportedAt}`;
+export async function persistExportTrace(
+  db: any,
+  uid: string,
+  submissionId: string,
+  trace: {
+    status: ExportLifecycleStatus;
+    makeExecutionId?: string;
+    sharePointUrl?: string;
+    exportedAt?: string;
+    errorSummary?: string;
+    statusAt: string;
+  },
+) {
+  const exportTracePath = `users/${uid}/activity/${submissionId}__export__${trace.status}__${trace.statusAt}`;
   await db.doc(exportTracePath).set({
-    type: 'motorized_screens_exported',
+    type: 'motorized_screens_export_status',
+    moduleKey: MODULE_KEY,
     submissionId,
     exportPipeline: 'make_to_sharepoint',
     ...trace,

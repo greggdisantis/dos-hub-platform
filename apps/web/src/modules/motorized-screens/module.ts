@@ -73,23 +73,53 @@ export async function exportMotorizedScreensOrder(params: {
   const fileName = buildMotorizedScreensPdfFileName(params.submission.projectName, params.submission.submissionId);
   const generatedPdfBase64 = params.pdfBase64 ?? Buffer.from(buildMotorizedScreensPdf(params.submission)).toString('base64');
 
-  const payload = {
-    moduleKey: MODULE_KEY,
-    projectId: params.submission.projectId,
-    submissionId: params.submission.submissionId,
-    projectName: params.submission.projectName,
-    uid: params.userUid,
-    pdfBase64: generatedPdfBase64,
-    fileName,
-    createdAt: new Date().toISOString(),
-  };
-
-  const makeResult = await postToMakeWebhook(params.webhookUrl, payload);
+  const statusAtQueued = new Date().toISOString();
   await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
-    makeExecutionId: makeResult?.executionId,
-    sharePointUrl: makeResult?.sharePointUrl,
-    exportedAt: new Date().toISOString(),
+    status: 'queued',
+    statusAt: statusAtQueued,
   });
 
-  return { fileName, makeResult };
+  try {
+    const payload = {
+      moduleKey: MODULE_KEY,
+      projectId: params.submission.projectId,
+      submissionId: params.submission.submissionId,
+      projectName: params.submission.projectName,
+      uid: params.userUid,
+      pdfBase64: generatedPdfBase64,
+      fileName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const makeResult = await postToMakeWebhook(params.webhookUrl, payload);
+    const statusAtSent = new Date().toISOString();
+    await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
+      status: 'sent_to_make',
+      makeExecutionId: makeResult?.executionId,
+      sharePointUrl: makeResult?.sharePointUrl,
+      exportedAt: statusAtSent,
+      statusAt: statusAtSent,
+    });
+
+    if (makeResult?.sharePointUrl || makeResult?.sharePointFileId || makeResult?.archived === true) {
+      const statusAtArchived = new Date().toISOString();
+      await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
+        status: 'archived',
+        makeExecutionId: makeResult?.executionId,
+        sharePointUrl: makeResult?.sharePointUrl,
+        exportedAt: statusAtArchived,
+        statusAt: statusAtArchived,
+      });
+    }
+
+    return { fileName, makeResult };
+  } catch (error: any) {
+    const statusAtFailed = new Date().toISOString();
+    await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
+      status: 'failed',
+      errorSummary: String(error?.message || error || 'Unknown export error').slice(0, 500),
+      statusAt: statusAtFailed,
+    });
+    throw error;
+  }
 }
