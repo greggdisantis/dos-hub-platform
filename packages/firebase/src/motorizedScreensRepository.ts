@@ -50,6 +50,7 @@ export async function persistExportTrace(
     sharePointUrl?: string;
     exportedAt?: string;
     errorSummary?: string;
+    attemptCount?: number;
     statusAt: string;
   },
 ) {

@@ -5,6 +5,33 @@ import { appendOnlySaveSubmission, persistExportTrace } from '../../../../../pac
 import { postToMakeWebhook } from '../../../../../packages/integrations/src/makeSharepoint';
 import { buildMotorizedScreensPdf, buildMotorizedScreensPdfFileName } from './pdf';
 
+const MAKE_MAX_ATTEMPTS = 3;
+const MAKE_RETRY_BACKOFF_MS = 250;
+
+async function delay(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function postToMakeWithRetry(webhookUrl: string, payload: any) {
+  let attempt = 0;
+  let lastError: any;
+
+  while (attempt < MAKE_MAX_ATTEMPTS) {
+    attempt += 1;
+    try {
+      const result = await postToMakeWebhook(webhookUrl, payload);
+      return { result, attempt };
+    } catch (error: any) {
+      lastError = error;
+      if (attempt >= MAKE_MAX_ATTEMPTS) break;
+      await delay(MAKE_RETRY_BACKOFF_MS * attempt);
+    }
+  }
+
+  throw { error: lastError, attemptCount: MAKE_MAX_ATTEMPTS };
+}
+
+
 export async function saveMotorizedScreensOrder(params: {
   db: any;
   user: { uid: string } | null;
@@ -91,13 +118,14 @@ export async function exportMotorizedScreensOrder(params: {
       createdAt: new Date().toISOString(),
     };
 
-    const makeResult = await postToMakeWebhook(params.webhookUrl, payload);
+    const { result: makeResult, attempt: successAttempt } = await postToMakeWithRetry(params.webhookUrl, payload);
     const statusAtSent = new Date().toISOString();
     await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
       status: 'sent_to_make',
       makeExecutionId: makeResult?.executionId,
       sharePointUrl: makeResult?.sharePointUrl,
       exportedAt: statusAtSent,
+      attemptCount: successAttempt,
       statusAt: statusAtSent,
     });
 
@@ -108,18 +136,22 @@ export async function exportMotorizedScreensOrder(params: {
         makeExecutionId: makeResult?.executionId,
         sharePointUrl: makeResult?.sharePointUrl,
         exportedAt: statusAtArchived,
+        attemptCount: successAttempt,
         statusAt: statusAtArchived,
       });
     }
 
     return { fileName, makeResult };
-  } catch (error: any) {
+  } catch (wrappedError: any) {
     const statusAtFailed = new Date().toISOString();
+    const finalError = wrappedError?.error || wrappedError;
+    const attemptCount = wrappedError?.attemptCount || 1;
     await persistExportTrace(params.db, params.userUid, params.submission.submissionId, {
       status: 'failed',
-      errorSummary: String(error?.message || error || 'Unknown export error').slice(0, 500),
+      attemptCount,
+      errorSummary: String(finalError?.message || finalError || 'Unknown export error').slice(0, 500),
       statusAt: statusAtFailed,
     });
-    throw error;
+    throw finalError;
   }
 }
